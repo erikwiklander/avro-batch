@@ -2,10 +2,8 @@ package io.wiklandia.avro;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Conversions;
-import org.apache.avro.LogicalType;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.data.TimeConversions;
@@ -17,7 +15,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 
 @Slf4j
 @Service
@@ -43,7 +40,7 @@ public class ConvertService {
                 ),
                 Converter.of(
                         (schema, s) -> schema.getType() == Schema.Type.INT,
-                        (schema, s) -> Integer.valueOf(s)
+                        (schema, s) -> new BigDecimal(s).intValueExact()
                 ),
                 Converter.of(
                         (schema, s) -> true,
@@ -55,7 +52,6 @@ public class ConvertService {
 
     public Object convert(Schema fieldSchema, String value) {
         Schema properSchema = getProperSchema(fieldSchema);
-        log.info("ok {}", properSchema);
         return converters()
                 .stream()
                 .filter(converter -> converter.valid.test(properSchema, value))

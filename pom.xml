@@ -51,11 +51,6 @@
 			<version>1.9.2</version>
 		</dependency>
 		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
@@ -70,6 +65,11 @@
 			<groupId>org.springframework.batch</groupId>
 			<artifactId>spring-batch-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.kumarpankaj18</groupId>
+			<artifactId>spring-batch-excel</artifactId>
+			<version>1.0.6</version>
 		</dependency>
 	</dependencies>
 
