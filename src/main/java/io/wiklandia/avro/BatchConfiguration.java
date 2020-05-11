@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.poi.POITextExtractor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -17,14 +16,14 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.avro.AvroItemWriter;
-import org.springframework.batch.item.excel.RowMapper;
 import org.springframework.batch.item.excel.poi.PoiItemReader;
 import org.springframework.batch.item.excel.support.rowset.RowSet;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.file.mapping.ArrayFieldSetMapper;
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 
 import java.io.File;
@@ -52,7 +51,8 @@ public class BatchConfiguration {
         return new FlatFileItemReaderBuilder<String[]>()
                 .name("recordItemReader")
                 .resource(properties.getInputFile())
-                .lineMapper((s, i) -> s.split(","))
+                .lineTokenizer(new DelimitedLineTokenizer())
+                .fieldSetMapper(new ArrayFieldSetMapper())
                 .build();
     }
 
@@ -68,6 +68,7 @@ public class BatchConfiguration {
     public ItemProcessor<String[], GenericRecord> processor() {
         return new ItemProcessor<>() {
             Schema schema = new Schema.Parser().parse(properties.getSchemaFile().getInputStream());
+
             @Override
             public GenericRecord process(String[] strings) {
                 GenericRecordBuilder builder = new GenericRecordBuilder(schema);
@@ -86,7 +87,7 @@ public class BatchConfiguration {
         return new AvroItemWriter<>(new FileSystemResource(new File("out.avro")), properties.getSchemaFile(), GenericRecord.class);
     }
 
-//    @Bean
+    @Bean
     public Job textToAvro(Step step) {
         return jobBuilderFactory.get("textToAvro")
                 .incrementer(new RunIdIncrementer())
@@ -96,18 +97,9 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Job excelToAvro(Step step) {
-        return jobBuilderFactory.get("excelToAvro")
-                .incrementer(new RunIdIncrementer())
-                .flow(step)
-                .end()
-                .build();
-    }
-
-    @Bean
     public Step step() {
         return stepBuilderFactory.get("step")
-                .<String[], GenericRecord> chunk(10)
+                .<String[], GenericRecord>chunk(10)
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())

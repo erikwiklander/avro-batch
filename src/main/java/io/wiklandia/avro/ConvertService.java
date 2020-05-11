@@ -20,35 +20,39 @@ import java.util.function.BiPredicate;
 @Service
 public class ConvertService {
 
+    static Converter NULL_CONVERTER = Converter.of(
+            (schema, s) -> s == null,
+            (schema, s) -> s);
+
+    static Converter DECIMAL_CONVERTER = Converter.of(
+            (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Decimal,
+            (schema, s) -> {
+                LogicalTypes.Decimal logicalType = (LogicalTypes.Decimal) schema.getLogicalType();
+                BigDecimal bigDecimal = new BigDecimal(s).setScale(logicalType.getScale(), RoundingMode.UNNECESSARY);
+                return new Conversions.DecimalConversion().toBytes(bigDecimal, schema, schema.getLogicalType());
+            });
+
+    static Converter DATE_CONVERTER = Converter.of(
+            (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Date,
+            (schema, s) -> new TimeConversions.DateConversion().toInt(LocalDate.parse(s), schema, schema.getLogicalType()));
+
+    static Converter INT_CONVERTER = Converter.of(
+            (schema, s) -> schema.getType() == Schema.Type.INT,
+            (schema, s) -> new BigDecimal(s).intValueExact());
+
+    static Converter DEFAULT_CONVERTER = Converter.of(
+            (schema, s) -> true,
+            (schema, s) -> s);
+
     private List<Converter> converters() {
         return List.of(
-                Converter.of(
-                        (schema, s) -> s == null,
-                        (schema, s) -> s
-                ),
-                Converter.of(
-                        (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Decimal,
-                        (schema, s) -> {
-                            LogicalTypes.Decimal logicalType = (LogicalTypes.Decimal) schema.getLogicalType();
-                            BigDecimal bigDecimal = new BigDecimal(s).setScale(logicalType.getScale(), RoundingMode.UNNECESSARY);
-                            return new Conversions.DecimalConversion().toBytes(bigDecimal, schema, schema.getLogicalType());
-                        }
-                ),
-                Converter.of(
-                        (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Date,
-                        (schema, s) -> new TimeConversions.DateConversion().toInt(LocalDate.parse(s), schema, schema.getLogicalType())
-                ),
-                Converter.of(
-                        (schema, s) -> schema.getType() == Schema.Type.INT,
-                        (schema, s) -> new BigDecimal(s).intValueExact()
-                ),
-                Converter.of(
-                        (schema, s) -> true,
-                        (schema, s) -> s
-                )
+                NULL_CONVERTER,
+                DECIMAL_CONVERTER,
+                DATE_CONVERTER,
+                INT_CONVERTER,
+                DEFAULT_CONVERTER
         );
     }
-
 
     public Object convert(Schema fieldSchema, String value) {
         Schema properSchema = getProperSchema(fieldSchema);
