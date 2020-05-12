@@ -2,55 +2,67 @@ package io.wiklandia.avro;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Conversions;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.data.TimeConversions;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 @Slf4j
-@Service
+@RequiredArgsConstructor
 public class ConvertService {
 
-    static Converter NULL_CONVERTER = Converter.of(
-            (schema, s) -> s == null,
-            (schema, s) -> s);
+    private final DateTimeFormatter formatter;
 
-    static Converter DECIMAL_CONVERTER = Converter.of(
-            (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Decimal,
-            (schema, s) -> {
-                LogicalTypes.Decimal logicalType = (LogicalTypes.Decimal) schema.getLogicalType();
-                BigDecimal bigDecimal = new BigDecimal(s).setScale(logicalType.getScale(), RoundingMode.UNNECESSARY);
-                return new Conversions.DecimalConversion().toBytes(bigDecimal, schema, schema.getLogicalType());
-            });
+    public ConvertService(String datePattern) {
+        this.formatter = DateTimeFormatter.ofPattern(datePattern);
+    }
 
-    static Converter DATE_CONVERTER = Converter.of(
-            (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Date,
-            (schema, s) -> new TimeConversions.DateConversion().toInt(LocalDate.parse(s), schema, schema.getLogicalType()));
+    Converter nullConverter() {
+        return Converter.of(
+                (schema, s) -> s == null,
+                (schema, s) -> s);
+    }
 
-    static Converter INT_CONVERTER = Converter.of(
-            (schema, s) -> schema.getType() == Schema.Type.INT,
-            (schema, s) -> new BigDecimal(s).intValueExact());
+    Converter decimalConverter() {
+        return Converter.of(
+                (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Decimal,
+                (schema, s) -> {
+                    LogicalTypes.Decimal logicalType = (LogicalTypes.Decimal) schema.getLogicalType();
+                    BigDecimal bigDecimal = new BigDecimal(s).setScale(logicalType.getScale(), RoundingMode.UNNECESSARY);
+                    return new Conversions.DecimalConversion().toBytes(bigDecimal, schema, schema.getLogicalType());
+                });
+    }
 
-    static Converter DEFAULT_CONVERTER = Converter.of(
-            (schema, s) -> true,
-            (schema, s) -> s);
+    Converter dateConverter() {
+        return Converter.of(
+                (schema, s) -> schema.getLogicalType() instanceof LogicalTypes.Date,
+                (schema, s) -> new TimeConversions.DateConversion()
+                        .toInt(LocalDate.parse(s, formatter), schema, schema.getLogicalType()));
+    }
+
+    Converter intConverter() {
+        return Converter.of(
+                (schema, s) -> schema.getType() == Schema.Type.INT,
+                (schema, s) -> new BigDecimal(s).intValueExact());
+    }
+
 
     private List<Converter> converters() {
         return List.of(
-                NULL_CONVERTER,
-                DECIMAL_CONVERTER,
-                DATE_CONVERTER,
-                INT_CONVERTER,
-                DEFAULT_CONVERTER
+                nullConverter(),
+                decimalConverter(),
+                dateConverter(),
+                intConverter()
         );
     }
 
@@ -61,7 +73,7 @@ public class ConvertService {
                 .filter(converter -> converter.valid.test(properSchema, value))
                 .map(converter -> converter.convert.apply(properSchema, value))
                 .findFirst()
-                .orElseThrow();
+                .orElse(value);
     }
 
     Schema getProperSchema(Schema fieldSchema) {

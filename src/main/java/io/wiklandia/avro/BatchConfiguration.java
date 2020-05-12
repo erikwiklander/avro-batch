@@ -37,7 +37,6 @@ public class BatchConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final BatchProperties properties;
-    private final ConvertService convertService;
 
     @Bean
     public ItemReader<String[]> reader() {
@@ -49,10 +48,11 @@ public class BatchConfiguration {
 
     FlatFileItemReader<String[]> flatFileReader() {
         return new FlatFileItemReaderBuilder<String[]>()
-                .name("recordItemReader")
+                .name("textItemReader")
                 .resource(properties.getInputFile())
-                .lineTokenizer(new DelimitedLineTokenizer())
+                .lineTokenizer(new DelimitedLineTokenizer(properties.getDelimiter()))
                 .fieldSetMapper(new ArrayFieldSetMapper())
+                .linesToSkip(properties.getLinesToSkip())
                 .build();
     }
 
@@ -60,12 +60,15 @@ public class BatchConfiguration {
         PoiItemReader<String[]> reader = new PoiItemReader<>();
         reader.setResource(properties.getInputFile());
         reader.setRowMapper(RowSet::getCurrentRow);
+        reader.setName("excelItemReader");
+        reader.setLinesToSkip(properties.getLinesToSkip());
         return reader;
     }
 
     @SneakyThrows
     @Bean
     public ItemProcessor<String[], GenericRecord> processor() {
+        ConvertService convertService = new ConvertService(properties.getDatePattern());
         return new ItemProcessor<>() {
             Schema schema = new Schema.Parser().parse(properties.getSchemaFile().getInputStream());
 
