@@ -37,6 +37,7 @@ public class BatchConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final BatchProperties properties;
+    private final ConvertService convertService;
 
     @Bean
     public ItemReader<String[]> reader() {
@@ -68,7 +69,6 @@ public class BatchConfiguration {
     @SneakyThrows
     @Bean
     public ItemProcessor<String[], GenericRecord> processor() {
-        ConvertService convertService = new ConvertService(properties.getDatePattern());
         return new ItemProcessor<>() {
             Schema schema = new Schema.Parser().parse(properties.getSchemaFile().getInputStream());
 

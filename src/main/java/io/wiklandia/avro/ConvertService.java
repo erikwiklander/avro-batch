@@ -8,6 +8,7 @@ import org.apache.avro.Conversions;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
 import org.apache.avro.data.TimeConversions;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -18,13 +19,32 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 @Slf4j
-@RequiredArgsConstructor
+@Service
 public class ConvertService {
 
     private final DateTimeFormatter formatter;
 
-    public ConvertService(String datePattern) {
-        this.formatter = DateTimeFormatter.ofPattern(datePattern);
+    public ConvertService(BatchProperties properties) {
+        this.formatter = DateTimeFormatter.ofPattern(properties.getDatePattern());
+    }
+
+    private List<Converter> converters() {
+        return List.of(
+                nullConverter(),
+                decimalConverter(),
+                dateConverter(),
+                intConverter()
+        );
+    }
+
+    public Object convert(Schema fieldSchema, String value) {
+        Schema properSchema = getProperSchema(fieldSchema);
+        return converters()
+                .stream()
+                .filter(converter -> converter.valid.test(properSchema, value))
+                .map(converter -> converter.convert.apply(properSchema, value))
+                .findFirst()
+                .orElse(value);
     }
 
     Converter nullConverter() {
@@ -56,26 +76,6 @@ public class ConvertService {
                 (schema, s) -> new BigDecimal(s).intValueExact());
     }
 
-
-    private List<Converter> converters() {
-        return List.of(
-                nullConverter(),
-                decimalConverter(),
-                dateConverter(),
-                intConverter()
-        );
-    }
-
-    public Object convert(Schema fieldSchema, String value) {
-        Schema properSchema = getProperSchema(fieldSchema);
-        return converters()
-                .stream()
-                .filter(converter -> converter.valid.test(properSchema, value))
-                .map(converter -> converter.convert.apply(properSchema, value))
-                .findFirst()
-                .orElse(value);
-    }
-
     Schema getProperSchema(Schema fieldSchema) {
         Schema.Type type = fieldSchema.getType();
         if (type == Schema.Type.UNION) {
@@ -85,8 +85,7 @@ public class ConvertService {
                     .map(this::getProperSchema)
                     .findFirst()
                     .orElseThrow();
-        }
-        if (type == Schema.Type.NULL) {
+        } else if (type == Schema.Type.NULL) {
             return null;
         } else {
             return fieldSchema;
