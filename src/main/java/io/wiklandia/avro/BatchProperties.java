@@ -17,4 +17,5 @@ public class BatchProperties {
     private String delimiter = ",";
     private int linesToSkip = 0;
     private String datePattern = "yyyy-MM-dd";
+    private String outputFile = "out.avro";
 }

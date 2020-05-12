@@ -87,7 +87,7 @@ public class BatchConfiguration {
     @SneakyThrows
     @Bean
     public ItemWriter<GenericRecord> writer() {
-        return new AvroItemWriter<>(new FileSystemResource(new File("out.avro")), properties.getSchemaFile(), GenericRecord.class);
+        return new AvroItemWriter<>(new FileSystemResource(new File(properties.getOutputFile())), properties.getSchemaFile(), GenericRecord.class);
     }
 
     @Bean
