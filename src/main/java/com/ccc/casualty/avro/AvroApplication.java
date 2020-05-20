@@ -1,4 +1,4 @@
-package io.wiklandia.avro;
+package com.ccc.casualty.avro;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

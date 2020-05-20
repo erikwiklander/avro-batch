@@ -1,4 +1,4 @@
-package io.wiklandia.avro;
+package com.ccc.casualty.avro;
 
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
@@ -41,8 +41,8 @@ public class BatchConfiguration {
 
     @Bean
     public ItemReader<String[]> reader() {
-        boolean excel = properties.getInputFile().getFilename().toLowerCase().endsWith("xlsx");
-        return excel
+        boolean isExcel = properties.getInputFile().getFilename().toLowerCase().endsWith("xlsx");
+        return isExcel
                 ? poiReader()
                 : flatFileReader();
     }
@@ -70,7 +70,7 @@ public class BatchConfiguration {
     @Bean
     public ItemProcessor<String[], GenericRecord> processor() {
         return new ItemProcessor<>() {
-            Schema schema = new Schema.Parser().parse(properties.getSchemaFile().getInputStream());
+            final Schema schema = new Schema.Parser().parse(properties.getSchemaFile().getInputStream());
 
             @Override
             public GenericRecord process(String[] strings) {
@@ -87,7 +87,9 @@ public class BatchConfiguration {
     @SneakyThrows
     @Bean
     public ItemWriter<GenericRecord> writer() {
-        return new AvroItemWriter<>(new FileSystemResource(new File(properties.getOutputFile())), properties.getSchemaFile(), GenericRecord.class);
+        return new AvroItemWriter<>(
+                new FileSystemResource(
+                        new File(properties.getOutputFile())), properties.getSchemaFile(), GenericRecord.class);
     }
 
     @Bean

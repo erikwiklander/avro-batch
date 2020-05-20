@@ -1,6 +1,6 @@
 {
   "type": "record",
-  "namespace": "Tutorialspoint",
+  "namespace": "com.ccc.casualty",
   "name": "Employee",
   "fields": [
     {

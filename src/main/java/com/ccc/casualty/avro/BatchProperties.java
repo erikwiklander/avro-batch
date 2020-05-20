@@ -1,4 +1,4 @@
-package io.wiklandia.avro;
+package com.ccc.casualty.avro;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

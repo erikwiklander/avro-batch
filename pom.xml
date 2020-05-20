@@ -8,7 +8,7 @@
 		<version>2.2.7.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>io.wiklandia</groupId>
+	<groupId>com.ccc.casulty</groupId>
 	<artifactId>avro</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>avro</name>

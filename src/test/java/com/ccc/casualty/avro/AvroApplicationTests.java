@@ -1,4 +1,4 @@
-package io.wiklandia.avro;
+package com.ccc.casualty.avro;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

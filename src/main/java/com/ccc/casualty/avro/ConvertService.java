@@ -1,8 +1,7 @@
-package io.wiklandia.avro;
+package com.ccc.casualty.avro;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Conversions;
 import org.apache.avro.LogicalTypes;
@@ -28,15 +27,6 @@ public class ConvertService {
         this.formatter = DateTimeFormatter.ofPattern(properties.getDatePattern());
     }
 
-    private List<Converter> converters() {
-        return List.of(
-                nullConverter(),
-                decimalConverter(),
-                dateConverter(),
-                intConverter()
-        );
-    }
-
     public Object convert(Schema fieldSchema, String value) {
         Schema properSchema = getProperSchema(fieldSchema);
         return converters()
@@ -46,6 +36,16 @@ public class ConvertService {
                 .findFirst()
                 .orElse(value);
     }
+
+    private List<Converter> converters() {
+        return List.of(
+                nullConverter(),
+                decimalConverter(),
+                dateConverter(),
+                intConverter()
+        );
+    }
+
 
     Converter nullConverter() {
         return Converter.of(
