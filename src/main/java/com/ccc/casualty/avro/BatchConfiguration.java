@@ -39,9 +39,10 @@ public class BatchConfiguration {
     private final BatchProperties properties;
     private final ConvertService convertService;
 
+    @SneakyThrows
     @Bean
     public ItemReader<String[]> reader() {
-        boolean isExcel = properties.getInputFile().getFilename().toLowerCase().endsWith("xlsx");
+        boolean isExcel = properties.getInputFile().getFile().getName().toLowerCase().endsWith("xlsx");
         return isExcel
                 ? poiReader()
                 : flatFileReader();
