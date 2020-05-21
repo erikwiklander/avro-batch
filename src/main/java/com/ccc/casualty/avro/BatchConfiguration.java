@@ -28,7 +28,6 @@ import org.springframework.core.io.FileSystemResource;
 
 import java.io.File;
 
-@Slf4j
 @EnableBatchProcessing
 @Configuration
 @AllArgsConstructor
@@ -72,7 +71,6 @@ public class BatchConfiguration {
     public ItemProcessor<String[], GenericRecord> processor() {
         return new ItemProcessor<>() {
             final Schema schema = new Schema.Parser().parse(properties.getSchemaFile().getInputStream());
-
             @Override
             public GenericRecord process(String[] strings) {
                 GenericRecordBuilder builder = new GenericRecordBuilder(schema);
@@ -89,8 +87,9 @@ public class BatchConfiguration {
     @Bean
     public ItemWriter<GenericRecord> writer() {
         return new AvroItemWriter<>(
-                new FileSystemResource(
-                        new File(properties.getOutputFile())), properties.getSchemaFile(), GenericRecord.class);
+                new FileSystemResource(properties.getOutputFile()),
+                properties.getSchemaFile(),
+                GenericRecord.class);
     }
 
     @Bean
